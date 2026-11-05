@@ -1,0 +1,109 @@
+name: Validate PostgreSQL mode
+on:
+  push:
+    branches: [feat/postgres-persistence]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: material_history
+          POSTGRES_PASSWORD: ci-postgres-only
+          POSTGRES_DB: material_history
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U material_history -d material_history"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      DATABASE_URL: postgresql://material_history:ci-postgres-only@localhost:5432/material_history
+      PAYLOAD_SECRET: ci-only-not-a-production-secret
+      NEXT_PUBLIC_DEMO_MODE: 'false'
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Setup pnpm
+        run: corepack enable && corepack prepare pnpm@10 --activate
+      - name: Install updated dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Generate first PostgreSQL migration
+        run: |
+          if [ ! -f src/migrations/index.ts ]; then
+            pnpm payload migrate:create initial-schema --skip-empty
+          fi
+      - name: Generate Payload types and import map
+        run: |
+          pnpm generate:importmap
+          pnpm generate:types
+      - name: Verify TypeScript
+        run: pnpm check:types
+      - name: Check production build
+        run: pnpm build
+      - name: Verify production can initialize an empty PostgreSQL schema
+        run: echo "The checked-in prodMigrations will be applied when the server starts."
+      - name: Launch real PostgreSQL-backed app
+        shell: bash
+        run: |
+          NODE_ENV=production pnpm start > /tmp/material-history-postgres.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for n in $(seq 1 45); do
+            if curl --fail --silent http://localhost:3000/api/equipment -o /tmp/equipment.json; then
+              if grep -q '"docs"' /tmp/equipment.json; then
+                echo "PostgreSQL-backed Payload API is responding"
+                curl --fail --silent http://localhost:3000/ >/tmp/homepage.html
+                grep -q "Material History" /tmp/homepage.html
+                exit 0
+              fi
+            fi
+            sleep 4
+          done
+          cat /tmp/material-history-postgres.log
+          exit 1
+      - name: Build PostgreSQL Docker image
+        run: docker build --build-arg NEXT_PUBLIC_DEMO_MODE=false -t material-history:postgres .
+      - name: Validate production Docker image against PostgreSQL
+        shell: bash
+        run: |
+          container_id=$(docker run -d --network host \
+            -e NODE_ENV=production \
+            -e PORT=3001 \
+            -e PAYLOAD_SECRET="$PAYLOAD_SECRET" \
+            -e NEXT_PUBLIC_DEMO_MODE=false \
+            -e DATABASE_URL="$DATABASE_URL" \
+            material-history:postgres)
+          trap 'docker logs "$container_id" 2>/dev/null || true; docker rm -f "$container_id" >/dev/null 2>&1 || true' EXIT
+          for n in $(seq 1 30); do
+            if curl --fail --silent http://localhost:3001/api/equipment -o /tmp/docker-equipment.json; then
+              grep -q '"docs"' /tmp/docker-equipment.json
+              echo "Docker image connected to PostgreSQL and served Payload API"
+              exit 0
+            fi
+            sleep 4
+          done
+          exit 1
+      - name: Commit generated migration and lockfile
+        if: github.event_name == 'push' && success()
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml src/migrations
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: lock PostgreSQL dependencies and initial schema migration"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+      - name: Print server log on failure
+        if: failure()
+        run: cat /tmp/material-history-postgres.log 2>/dev/null || true

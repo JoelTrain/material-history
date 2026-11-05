@@ -151,27 +151,22 @@ export default function App({
 }) {
   const [page, setPage] = useState<Page>('dashboard')
   const [role, setRole] = useState<Role>('Maintenance Technician')
-  const [records, setRecords] = useState<RecordItem[]>([
-    ...initialPersistedRecords,
-    ...initialRecords.filter(
-      (record) => !initialPersistedRecords.some((persisted) => persisted.id === record.id),
-    ),
-  ])
-  const [components, setComponents] = useState<ComponentItem[]>([
-    ...initialPersistedComponents,
-    ...initialComponents.filter(
-      (component) =>
-        !initialPersistedComponents.some((persisted) => persisted.serial === component.serial),
-    ),
-  ])
+  // Live mode uses only records returned by Payload. Mock data is demo-only.
+  const [records, setRecords] = useState<RecordItem[]>(
+    demoMode ? initialRecords : initialPersistedRecords,
+  )
+  const [components, setComponents] = useState<ComponentItem[]>(
+    demoMode ? initialComponents : initialPersistedComponents,
+  )
   const [equipmentTree, setEquipmentTree] = useState<EquipmentItem[]>(
-    initialEquipment.length ? initialEquipment : fallbackEquipmentTree,
+    demoMode ? fallbackEquipmentTree : initialEquipment,
   )
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => {
     try {
-      const savedRecords = localStorage.getItem('mh-records')
-      const savedComponents = localStorage.getItem('mh-components')
+      // Local demo changes must never be merged into live PostgreSQL records.
+      const savedRecords = demoMode ? localStorage.getItem('mh-demo-records') : null
+      const savedComponents = demoMode ? localStorage.getItem('mh-demo-components') : null
       const savedEquipment = demoMode ? localStorage.getItem('mh-demo-equipment') : null
       if (savedEquipment) {
         const parsedEquipment = JSON.parse(savedEquipment) as EquipmentItem[]
@@ -209,19 +204,19 @@ export default function App({
     }
     setHydrated(true)
   }, [])
-  const [selectedRecord, setSelectedRecord] = useState<string>(records[0].id)
-  const [selectedComponent, setSelectedComponent] = useState<string>(components[0].id)
+  const [selectedRecord, setSelectedRecord] = useState<string>(records[0]?.id ?? '')
+  const [selectedComponent, setSelectedComponent] = useState<string>(components[0]?.id ?? '')
   const [createType, setCreateType] = useState<'Maintenance' | 'Component' | null>(null)
   const [replaceOpen, setReplaceOpen] = useState(false)
   const [requestedEquipment, setRequestedEquipment] = useState<string>()
   const [mobileNav, setMobileNav] = useState(false)
   const [toast, setToast] = useState('')
   useEffect(() => {
-    if (hydrated) localStorage.setItem('mh-records', JSON.stringify(records))
-  }, [records, hydrated])
+    if (demoMode && hydrated) localStorage.setItem('mh-demo-records', JSON.stringify(records))
+  }, [demoMode, records, hydrated])
   useEffect(() => {
-    if (hydrated) localStorage.setItem('mh-components', JSON.stringify(components))
-  }, [components, hydrated])
+    if (demoMode && hydrated) localStorage.setItem('mh-demo-components', JSON.stringify(components))
+  }, [demoMode, components, hydrated])
   useEffect(() => {
     if (demoMode && hydrated) localStorage.setItem('mh-demo-equipment', JSON.stringify(equipmentTree))
   }, [demoMode, equipmentTree, hydrated])
@@ -427,7 +422,7 @@ export default function App({
               }
             />
           )}
-          {page === 'record' && (
+          {page === 'record' && records.length > 0 && (
             <RecordDetail
               record={records.find((r) => r.id === selectedRecord) || records[0]}
               role={role}
@@ -436,7 +431,7 @@ export default function App({
               back={() => go('search')}
             />
           )}
-          {page === 'component' && (
+          {page === 'component' && components.length > 0 && (
             <ComponentDetail
               component={components.find((c) => c.id === selectedComponent) || components[0]}
               records={records}
@@ -467,7 +462,7 @@ export default function App({
           }}
         />
       )}
-      {replaceOpen && (
+      {replaceOpen && components.length > 0 && (
         <ReplaceModal
           current={components.find((c) => c.id === selectedComponent) || components[0]}
           components={components}

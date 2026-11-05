@@ -17,7 +17,7 @@ ENV NEXT_PUBLIC_DEMO_MODE=${NEXT_PUBLIC_DEMO_MODE}
 ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
 # Only required by Payload during compilation. The runtime secret is supplied by Compose.
 ENV PAYLOAD_SECRET=build-time-placeholder-not-a-runtime-secret
-ENV DATABASE_URL=file:/app/data/material-history.db
+ENV DATABASE_URL=postgresql://build:build@127.0.0.1:5432/material_history
 RUN pnpm generate:importmap && pnpm generate:types && pnpm build
 
 FROM node:24-bookworm-slim AS runner

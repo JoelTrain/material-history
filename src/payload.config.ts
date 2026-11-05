@@ -1,6 +1,7 @@
 import path from 'path'
 import { buildConfig } from 'payload'
 import { sqliteAdapter } from '@payloadcms/db-sqlite'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { mcpPlugin } from '@payloadcms/plugin-mcp'
 import { en as adminLanguage } from '@payloadcms/translations/languages/en'
@@ -12,17 +13,34 @@ import { Tags } from './collections/Tags'
 import { Equipment } from './collections/Equipment'
 import { MaterialRecords } from './collections/MaterialRecords'
 import { SerializedComponents } from './collections/SerializedComponents'
+import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || '',
-  db: sqliteAdapter({
-    client: {
-      url: process.env.DATABASE_URL || 'file:./material-history.db',
-    },
-  }),
+  // Demo mode does not query Payload on the frontend. Keep a local SQLite adapter
+  // for optional Payload routes; non-demo mode requires real PostgreSQL credentials.
+  db: process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+    ? sqliteAdapter({
+        client: { url: process.env.DATABASE_URL?.startsWith('file:')
+          ? process.env.DATABASE_URL
+          : 'file:./material-history.db' },
+      })
+    : postgresAdapter({
+        // Apply checked-in, versioned migrations when the production server starts.
+        prodMigrations: migrations,
+        pool: {
+          connectionString: (() => {
+            const url = process.env.DATABASE_URL
+            if (!url || !/^postgres(ql)?:\/\//.test(url)) {
+              throw new Error('DATABASE_URL must be a PostgreSQL connection string when NEXT_PUBLIC_DEMO_MODE=false')
+            }
+            return url
+          })(),
+        },
+      }),
   editor: lexicalEditor({}),
   admin: {
     user: Admins.slug,

@@ -26,7 +26,8 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "sharp": "^0.35.4",
-    "@payloadcms/db-sqlite": "4.0.0-beta.4"
+    "@payloadcms/db-sqlite": "4.0.0-beta.4",
+    "@payloadcms/db-postgres": "4.0.0-beta.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",

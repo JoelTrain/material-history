@@ -21,6 +21,7 @@ services:
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
       # Use a real secret in .env for database-backed deployments.
       PAYLOAD_SECRET: ${PAYLOAD_SECRET:-demo-only-do-not-use-in-production}
+      # Demo does not query the database. Use the override for PostgreSQL mode.
       DATABASE_URL: file:/app/data/material-history.db
     volumes:
       # Named volume retains SQLite data across container replacement when enabled.
