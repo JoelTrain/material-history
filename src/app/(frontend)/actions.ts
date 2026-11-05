@@ -33,6 +33,27 @@ export async function createEquipmentAction(input: {
     categoryType: 'main' | 'sub'
   }>
 > {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    const name = cleanText(input.name, 120)
+    const identifier = cleanText(input.identifier, 40).toUpperCase()
+    const categoryType = input.categoryType === 'sub' ? 'sub' : 'main'
+    const parent = cleanText(input.parent, 100)
+    const fieldErrors: Record<string, string> = {}
+    if (!name) fieldErrors.name = 'Enter an equipment name.'
+    if (!identifier || !/^[A-Z0-9-]+$/.test(identifier)) {
+      fieldErrors.identifier = 'Use uppercase letters, numbers, and hyphens only.'
+    }
+    if (categoryType === 'sub' && !parent) fieldErrors.parent = 'Select a parent.'
+    if (Object.keys(fieldErrors).length) {
+      return { success: false, error: 'Correct the highlighted fields.', fieldErrors }
+    }
+    return {
+      success: true,
+      data: { id: crypto.randomUUID(), name, code: identifier,
+        parent: categoryType === 'sub' ? parent : undefined, categoryType, count: 0 },
+    }
+  }
+
   const admin = await getAuthenticatedAdmin()
   if (!admin) {
     return {
@@ -122,6 +143,16 @@ export async function moveEquipmentAction(input: {
   equipmentId: string
   targetMainId: string
 }): Promise<ActionResult<{ equipmentId: string; parent: string; parentName: string }>> {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    const equipmentId = cleanText(input.equipmentId, 100)
+    const targetMainId = cleanText(input.targetMainId, 100)
+    if (!equipmentId || !targetMainId || equipmentId === targetMainId) {
+      return { success: false, error: 'Choose a valid equipment destination.' }
+    }
+    // The client owns the mock hierarchy and persists it in localStorage.
+    return { success: true, data: { equipmentId, parent: targetMainId, parentName: 'selected group' } }
+  }
+
   const admin = await getAuthenticatedAdmin()
   if (!admin) {
     return {
@@ -235,6 +266,12 @@ export async function createMaterialRecordAction(input: {
     return { success: false, error: 'Correct the highlighted fields.', fieldErrors }
   }
 
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    // The client adds the validated record to its browser-local demo state.
+    const recordId = `MHR-${new Date().getUTCFullYear()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+    return { success: true, data: { recordId } }
+  }
+
   const payload = await getPayloadClient()
   const auth = await payload.auth({ headers: await headers() })
   try {
@@ -316,6 +353,13 @@ export async function createSerializedComponentAction(input: {
   if (!installedByName) fieldErrors.installedByName = 'Enter the installer name.'
   if (Object.keys(fieldErrors).length) {
     return { success: false, error: 'Correct the highlighted fields.', fieldErrors }
+  }
+
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    return { success: true, data: {
+      id: crypto.randomUUID(), name: componentName, serial: serialNumber,
+      part: partNumber, location: equipmentID, installed: installedDate.slice(0, 10),
+    } }
   }
 
   const payload = await getPayloadClient()

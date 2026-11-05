@@ -15,6 +15,18 @@ Built with **Next.js 16**, **React 19**, **Payload CMS 4 (beta)**, **TypeScript*
 - Dashboard, search, and reporting interface
 - Payload CMS administration and API
 
+## Database-free demo mode
+
+The frontend can run with **no database setup or database connection** using the existing sample records, components, and equipment hierarchy.
+
+Set `NEXT_PUBLIC_DEMO_MODE=true` in your `.env` file (included in `.env.example` and new Codespaces), then run `pnpm dev` and visit **http://localhost:3000**. The demo includes 72 material records, 30 components, and a sample equipment hierarchy.
+
+- Demo forms for adding equipment, components, and maintenance records are simulated; browser `localStorage` retains changes between reloads on the same browser.
+- This is **not** server-side persistence. Clearing site data or using another browser resets the demo. Never enter real information.
+- The demo role selector simulates user roles and is **not authentication**.
+- Payload CMS routes such as `/admin` and `/api` are **not part of database-free mode**; they still need a database and the real Payload authentication setup.
+- To return to database-backed behavior, set `NEXT_PUBLIC_DEMO_MODE=false` and restart the server. The existing Payload CMS configuration is unchanged.
+
 ## Quick start (local)
 
 **Prerequisites:** Node.js 24.22.1 or newer, and Corepack / pnpm 10.

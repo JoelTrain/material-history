@@ -7,6 +7,18 @@ import { getSerializedComponents } from '@/lib/serialized-components'
 import { getMaterialRecords } from '@/lib/material-records'
 
 export default async function HomePage() {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    // No database connection is made for the standalone frontend demo.
+    return (
+      <MaterialHistoryApp
+        demoMode
+        initialEquipment={[]}
+        initialPersistedComponents={[]}
+        initialPersistedRecords={[]}
+      />
+    )
+  }
+
   const [equipment, serializedComponents, materialRecords] = await Promise.all([
     getEquipment(),
     getSerializedComponents(),
