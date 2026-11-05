@@ -1,4 +1,7 @@
 import MaterialHistoryApp from '@/components/MaterialHistoryApp'
+
+// The dashboard reads live Payload data; do not query the database during build-time prerendering.
+export const dynamic = 'force-dynamic'
 import { getEquipment } from '@/lib/equipment'
 import { getSerializedComponents } from '@/lib/serialized-components'
 import { getMaterialRecords } from '@/lib/material-records'
