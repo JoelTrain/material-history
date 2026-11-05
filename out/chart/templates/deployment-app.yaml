@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: app
+    namespace: '{{ .Release.Namespace }}'
+    labels:
+        app.kubernetes.io/name: app
+        app.kubernetes.io/part-of: material-history
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: app
+    template:
+        metadata:
+            name: ""
+            labels:
+                app.kubernetes.io/name: app
+        spec:
+            containers:
+                - name: app
+                  image: zarf.internal/material-history-app:dev
+                  imagePullPolicy: Always
+                  envFrom:
+                    - configMapRef:
+                        name: app-environment
+                  ports:
+                    - name: port-3000-tcp
+                      containerPort: 3000
+                      protocol: TCP
+                  volumeMounts:
+                    - name: volume-material-history-data
+                      mountPath: /app/data
+                  livenessProbe:
+                    exec:
+                        command:
+                            - node
+                            - -e
+                            - fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))
+                    periodSeconds: 30
+                    initialDelaySeconds: 60
+                    timeoutSeconds: 10
+                    failureThreshold: 3
+                  # {{ $allResources := .Values.resources | default (dict) }}
+                  # {{ $serviceResources := (index $allResources "app") | default (dict) }}
+                  # {{ $requests := (index $serviceResources "requests") | default (dict) }}
+                  # {{ $limits := (index $serviceResources "limits") | default (dict) }}
+                  # {{ $cpuRequest := (index $requests "cpu") | default "" }}
+                  # {{ $memoryRequest := (index $requests "memory") | default "" }}
+                  # {{ $cpuLimit := (index $limits "cpu") | default "" }}
+                  # {{ $memoryLimit := (index $limits "memory") | default "" }}
+                  # {{ if or $cpuRequest $memoryRequest $cpuLimit $memoryLimit }}
+                  resources:
+                      # {{ if or $cpuRequest $memoryRequest }}
+                      requests:
+                          # {{ with $cpuRequest }}
+                          cpu: "{{ . }}"
+                          # {{ end }}
+                          # {{ with $memoryRequest }}
+                          memory: "{{ . }}"
+                          # {{ end }}
+                      # {{ end }}
+                      # {{ if or $cpuLimit $memoryLimit }}
+                      limits:
+                          # {{ with $cpuLimit }}
+                          cpu: "{{ . }}"
+                          # {{ end }}
+                          # {{ with $memoryLimit }}
+                          memory: "{{ . }}"
+                          # {{ end }}
+                      # {{ end }}
+                  # {{ end }}
+            volumes:
+                - name: volume-material-history-data
+                  persistentVolumeClaim:
+                    claimName: material-history-data

@@ -1,0 +1,33 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+    name: material-history
+    namespace: '{{ .Release.Namespace }}'
+spec:
+    network:
+        serviceMesh:
+            mode: ambient
+        expose:
+            - gateway: tenant
+              host: '{{ include "composeBridge.subdomain" . }}'
+              podLabels:
+                app.kubernetes.io/name: app
+              port: 3000
+              selector:
+                app.kubernetes.io/name: app
+              service: app
+        allow:
+            - direction: Ingress
+              remoteGenerated: IntraNamespace
+            - direction: Egress
+              remoteGenerated: IntraNamespace
+            {{- with .Values.additionalNetworkAllow }}
+            {{ toYaml . | nindent 12 }}
+            {{- end }}
+    sso:
+        - clientId: uds-compose-{{ .Release.Namespace }}
+          enableAuthserviceSelector:
+            app.kubernetes.io/name: app
+          name: Material History Login
+          redirectUris:
+            - https://{{ include "composeBridge.subdomain" . }}.{{ .Values.uds.domain }}/*

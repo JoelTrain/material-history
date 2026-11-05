@@ -1,0 +1,6 @@
+apiVersion: v2
+name: material-history
+description: UDS package generated from Docker Compose for material-history
+type: application
+version: 0.0.0-dev
+appVersion: dev
