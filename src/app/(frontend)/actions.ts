@@ -87,7 +87,7 @@ export async function createEquipmentAction(input: {
         name,
         identifier,
         categoryType,
-        parent: categoryType === 'sub' ? parent : null,
+        parent: categoryType === 'sub' ? Number(parent) : null,
         description: description || null,
         active: true,
       },
@@ -182,7 +182,7 @@ export async function moveEquipmentAction(input: {
       overrideAccess: false,
       user: admin,
       data: {
-        parent: targetMainId,
+        parent: Number(targetMainId),
       },
     })
 
@@ -257,7 +257,7 @@ export async function createMaterialRecordAction(input: {
       data: {
         recordId,
         recordType: input.recordType,
-        equipment,
+        equipment: Number(equipment),
         componentName: cleanText(input.componentName, 120) || null,
         serialNumber: cleanText(input.serialNumber, 80) || null,
         activityDate,
@@ -357,7 +357,7 @@ export async function createSerializedComponentAction(input: {
         componentName,
         serialNumber,
         partNumber,
-        equipment: equipmentID,
+        equipment: Number(equipmentID),
         installedDate,
         installedByName,
         notes: notes || null,
