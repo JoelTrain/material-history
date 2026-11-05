@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: material-history-data
+    namespace: '{{ .Release.Namespace }}'
+    labels:
+        app.kubernetes.io/name: material-history-data
+        app.kubernetes.io/part-of: material-history
+spec:
+    accessModes:
+        - ReadWriteOnce
+    resources:
+        requests:
+            storage: 1Gi
