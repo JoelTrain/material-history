@@ -8,6 +8,11 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,6 +21,7 @@ jobs:
       DATABASE_URL: file:./material-history-ci.db
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
       NODE_ENV: production
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,9 +38,35 @@ jobs:
       - name: Generate Payload types
         run: pnpm generate:types
       - name: Check types
-        run: pnpm check:types
+        shell: bash
+        run: |
+          pnpm check:types 2>&1 | tee typecheck.log
+          exit ${PIPESTATUS[0]}
+      - name: Report TypeScript failures
+        if: failure()
+        shell: bash
+        run: |
+          if [ -s typecheck.log ]; then
+            printf '### Material History TypeScript validation errors\n\n\x60\x60\x60text\n' > ci-report.md
+            tail -c 30000 typecheck.log >> ci-report.md
+            printf '\n\x60\x60\x60\n' >> ci-report.md
+            gh pr comment 1 --body-file ci-report.md || true
+          fi
       - name: Production build
-        run: pnpm build
+        shell: bash
+        run: |
+          pnpm build 2>&1 | tee build.log
+          exit ${PIPESTATUS[0]}
+      - name: Report build failures
+        if: failure()
+        shell: bash
+        run: |
+          if [ -s build.log ]; then
+            printf '### Material History production build errors\n\n\x60\x60\x60text\n' > ci-report.md
+            tail -c 30000 build.log >> ci-report.md
+            printf '\n\x60\x60\x60\n' >> ci-report.md
+            gh pr comment 1 --body-file ci-report.md || true
+          fi
       - name: Upload generated lockfile
         if: always()
         uses: actions/upload-artifact@v4
