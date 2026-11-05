@@ -108,7 +108,7 @@ export interface Config {
     'payload-llm-instructions': PayloadLlmInstructionsSelect<false> | PayloadLlmInstructionsSelect<true>;
   };
   db: {
-    defaultIDType: string;
+    defaultIDType: number;
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | 'en' | 'en'[];
   globals: {};
@@ -150,22 +150,33 @@ export interface AdminAuthOperations {
  * via the `definition` "admins".
  */
 export interface Admin {
-  id: string;
-  figmaHandle?: string | null;
-  figmaImageUrl?: string | null;
-  userGroups?: string[] | null;
-  makePermission?: ('view' | 'edit') | null;
-  email?: string | null;
+  id: number;
   createdBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedAt: string;
   createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
   collection: 'admins';
 }
 /**
@@ -173,19 +184,17 @@ export interface Admin {
  * via the `definition` "media".
  */
 export interface Media {
-  id: string;
+  id: number;
   alt: string;
-  _h_folders?: (string | null) | Folder;
-  _h_tags?: (string | Tag)[] | null;
-  prefix?: string | null;
-  _objectKey?: string | null;
+  _h_folders?: (number | null) | Folder;
+  _h_tags?: (number | Tag)[] | null;
   createdBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedAt: string;
   createdAt: string;
@@ -214,16 +223,16 @@ export interface Media {
  * via the `definition` "folders".
  */
 export interface Folder {
-  id: string;
-  _h_folders?: (string | null) | Folder;
+  id: number;
+  _h_folders?: (number | null) | Folder;
   name: string;
   createdBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedAt: string;
   createdAt: string;
@@ -235,16 +244,16 @@ export interface Folder {
  * via the `definition` "tags".
  */
 export interface Tag {
-  id: string;
-  _h_tags?: (string | null) | Tag;
+  id: number;
+  _h_tags?: (number | null) | Tag;
   name: string;
   createdBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedAt: string;
   createdAt: string;
@@ -256,7 +265,7 @@ export interface Tag {
  * via the `definition` "equipment".
  */
 export interface Equipment {
-  id: string;
+  id: number;
   name: string;
   /**
    * Unique equipment identifier within USS Example.
@@ -266,16 +275,16 @@ export interface Equipment {
   /**
    * Required for sub-equipment categories.
    */
-  parent?: (string | null) | Equipment;
+  parent?: (number | null) | Equipment;
   description?: string | null;
   active: boolean;
   createdBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedAt: string;
   createdAt: string;
@@ -285,10 +294,10 @@ export interface Equipment {
  * via the `definition` "material-records".
  */
 export interface MaterialRecord {
-  id: string;
+  id: number;
   recordId: string;
   recordType: 'maintenance' | 'component';
-  equipment: string | Equipment;
+  equipment: number | Equipment;
   componentName?: string | null;
   serialNumber?: string | null;
   activityDate: string;
@@ -302,11 +311,11 @@ export interface MaterialRecord {
     'pending-supervisor-review' | 'pending-engineering-review' | 'pending-final-approval' | 'rejected' | 'approved';
   createdBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedAt: string;
   createdAt: string;
@@ -316,25 +325,25 @@ export interface MaterialRecord {
  * via the `definition` "serialized-components".
  */
 export interface SerializedComponent {
-  id: string;
+  id: number;
   componentName: string;
   /**
    * Unique within the USS Example equipment scope.
    */
   serialNumber: string;
   partNumber: string;
-  equipment: string | Equipment;
+  equipment: number | Equipment;
   installedDate: string;
   installedByName: string;
   notes?: string | null;
   status: 'installed' | 'pending' | 'removed' | 'storage';
   createdBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedAt: string;
   createdAt: string;
@@ -344,7 +353,7 @@ export interface SerializedComponent {
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: string;
+  id: number;
   key: string;
   data:
     | {
@@ -361,40 +370,40 @@ export interface PayloadKv {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: string;
+  id: number;
   document?:
     | ({
         relationTo: 'admins';
-        value: string | Admin;
+        value: number | Admin;
       } | null)
     | ({
         relationTo: 'media';
-        value: string | Media;
+        value: number | Media;
       } | null)
     | ({
         relationTo: 'folders';
-        value: string | Folder;
+        value: number | Folder;
       } | null)
     | ({
         relationTo: 'tags';
-        value: string | Tag;
+        value: number | Tag;
       } | null)
     | ({
         relationTo: 'equipment';
-        value: string | Equipment;
+        value: number | Equipment;
       } | null)
     | ({
         relationTo: 'material-records';
-        value: string | MaterialRecord;
+        value: number | MaterialRecord;
       } | null)
     | ({
         relationTo: 'serialized-components';
-        value: string | SerializedComponent;
+        value: number | SerializedComponent;
       } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   };
   updatedAt: string;
   createdAt: string;
@@ -404,10 +413,10 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: string;
+  id: number;
   user: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   };
   key?: string | null;
   value?:
@@ -427,7 +436,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: string;
+  id: number;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -446,11 +455,11 @@ export interface PayloadLlmInstruction {
   systemInstructions?: LexicalRichText<LexicalNodes_3DE324E4> | null;
   createdBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedBy?: {
     relationTo: 'admins';
-    value: string | Admin;
+    value: number | Admin;
   } | null;
   updatedAt: string;
   createdAt: string;
@@ -460,15 +469,25 @@ export interface PayloadLlmInstruction {
  * via the `definition` "admins_select".
  */
 export interface AdminsSelect<T extends boolean = true> {
-  figmaHandle?: T;
-  figmaImageUrl?: T;
-  userGroups?: T;
-  makePermission?: T;
-  email?: T;
   createdBy?: T;
   updatedBy?: T;
   updatedAt?: T;
   createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  resetPasswordRequestedAt?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -478,8 +497,6 @@ export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   _h_folders?: T;
   _h_tags?: T;
-  prefix?: T;
-  _objectKey?: T;
   createdBy?: T;
   updatedBy?: T;
   updatedAt?: T;
