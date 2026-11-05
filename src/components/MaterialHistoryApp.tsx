@@ -142,7 +142,9 @@ export default function App({
   initialEquipment,
   initialPersistedComponents,
   initialPersistedRecords,
+  demoMode = false,
 }: {
+  demoMode?: boolean
   initialEquipment: EquipmentItem[]
   initialPersistedComponents: ComponentItem[]
   initialPersistedRecords: RecordItem[]
@@ -170,6 +172,11 @@ export default function App({
     try {
       const savedRecords = localStorage.getItem('mh-records')
       const savedComponents = localStorage.getItem('mh-components')
+      const savedEquipment = demoMode ? localStorage.getItem('mh-demo-equipment') : null
+      if (savedEquipment) {
+        const parsedEquipment = JSON.parse(savedEquipment) as EquipmentItem[]
+        if (Array.isArray(parsedEquipment)) setEquipmentTree(parsedEquipment)
+      }
       if (savedRecords) {
         const parsedRecords = JSON.parse(savedRecords) as RecordItem[]
         setRecords([
@@ -216,6 +223,9 @@ export default function App({
     if (hydrated) localStorage.setItem('mh-components', JSON.stringify(components))
   }, [components, hydrated])
   useEffect(() => {
+    if (demoMode && hydrated) localStorage.setItem('mh-demo-equipment', JSON.stringify(equipmentTree))
+  }, [demoMode, equipmentTree, hydrated])
+  useEffect(() => {
     if (toast) {
       const t = setTimeout(() => setToast(''), 3200)
       return () => clearTimeout(t)
@@ -256,6 +266,11 @@ export default function App({
 
   return (
     <div className="app">
+      {demoMode && (
+        <div role="status" style={{ padding: '8px 16px', background: '#fff3c4', color: '#5c4200', fontSize: 12, textAlign: 'center' }}>
+          DEMO MODE — Sample data only. Changes are saved in this browser, not to a database.
+        </div>
+      )}
       <aside className={`sidebar ${mobileNav ? 'open' : ''}`}>
         <div className="brand">
           <div className="brand-mark">

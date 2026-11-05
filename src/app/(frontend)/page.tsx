@@ -1,9 +1,24 @@
 import MaterialHistoryApp from '@/components/MaterialHistoryApp'
+
+// The dashboard reads live Payload data; do not query the database during build-time prerendering.
+export const dynamic = 'force-dynamic'
 import { getEquipment } from '@/lib/equipment'
 import { getSerializedComponents } from '@/lib/serialized-components'
 import { getMaterialRecords } from '@/lib/material-records'
 
 export default async function HomePage() {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    // No database connection is made for the standalone frontend demo.
+    return (
+      <MaterialHistoryApp
+        demoMode
+        initialEquipment={[]}
+        initialPersistedComponents={[]}
+        initialPersistedRecords={[]}
+      />
+    )
+  }
+
   const [equipment, serializedComponents, materialRecords] = await Promise.all([
     getEquipment(),
     getSerializedComponents(),
