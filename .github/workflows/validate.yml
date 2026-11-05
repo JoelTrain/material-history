@@ -1,0 +1,44 @@
+name: Validate standalone Material History
+on:
+  push:
+    branches:
+      - chore/remove-figma-dependencies
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      PAYLOAD_SECRET: ci-only-secret-do-not-use-in-production
+      DATABASE_URL: file:./material-history-ci.db
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NODE_ENV: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Activate pnpm
+        run: corepack enable && corepack prepare pnpm@10 --activate
+      - name: Install dependencies and generate lockfile
+        run: pnpm install --no-frozen-lockfile
+      - name: Generate Payload import map
+        run: pnpm generate:importmap
+      - name: Generate Payload types
+        run: pnpm generate:types
+      - name: Check types
+        run: pnpm check:types
+      - name: Production build
+        run: pnpm build
+      - name: Upload generated lockfile
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-pnpm-lock
+          path: pnpm-lock.yaml
+          if-no-files-found: ignore
