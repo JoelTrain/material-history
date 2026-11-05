@@ -1,0 +1,23 @@
+additionalNetworkAllow:
+  ###ZARF_VAR_ADDITIONAL_NETWORK_ALLOW###
+environment:
+    app:
+        DATABASE_URL: '###ZARF_VAR_APP_DATABASE_URL###'
+        HOSTNAME: '###ZARF_VAR_APP_HOSTNAME###'
+        NEXT_PUBLIC_DEMO_MODE: '###ZARF_VAR_APP_NEXT_PUBLIC_DEMO_MODE###'
+        NEXT_PUBLIC_SITE_URL: '###ZARF_VAR_APP_NEXT_PUBLIC_SITE_URL###'
+        NODE_ENV: '###ZARF_VAR_APP_NODE_ENV###'
+        PAYLOAD_SECRET: '###ZARF_VAR_APP_PAYLOAD_SECRET###'
+        PORT: '###ZARF_VAR_APP_PORT###'
+resources:
+    app:
+        requests:
+            cpu: '###ZARF_VAR_APP_CPU_REQUEST###'
+            memory: '###ZARF_VAR_APP_MEMORY_REQUEST###'
+        limits:
+            cpu: '###ZARF_VAR_APP_CPU_LIMIT###'
+            memory: '###ZARF_VAR_APP_MEMORY_LIMIT###'
+secrets: {}
+uds:
+    domain: "###ZARF_VAR_DOMAIN###"
+    subdomain: "###ZARF_VAR_SUBDOMAIN###"

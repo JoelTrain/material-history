@@ -1,0 +1,107 @@
+{
+  "translated": [
+    {
+      "path": "name",
+      "target": "package metadata name",
+      "message": "Used the Compose project name as the generated package identity."
+    },
+    {
+      "path": "networks.default",
+      "target": "UDS network policy selectors",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.app.build.args",
+      "target": "generated Buildx Bake service",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.app.build.context",
+      "target": "generated Buildx Bake service",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.app.build.dockerfile",
+      "target": "generated Buildx Bake service",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.app.environment",
+      "target": "environment ConfigMap and deploy-time variables",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.app.expose",
+      "target": "Kubernetes Service ports",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.app.healthcheck",
+      "target": "Deployment liveness probe",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.app.networks",
+      "target": "UDS network policy selectors",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.app.ports",
+      "target": "Kubernetes Service ports",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.app.volumes[0]",
+      "target": "Deployment volume mount",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "volumes.material-history-data",
+      "target": "PersistentVolumeClaim",
+      "message": "Translated this Compose setting into generated package configuration."
+    }
+  ],
+  "inferred": [
+    {
+      "path": "services.app.image",
+      "value": "zarf.internal/material-history-app:dev",
+      "message": "Generated an internal image reference for the local build."
+    },
+    {
+      "path": "x-uds.metadata.name",
+      "value": "material-history",
+      "message": "Inferred the package name and Kubernetes namespace from the Compose project name."
+    },
+    {
+      "path": "x-uds.metadata.version",
+      "value": "dev",
+      "message": "Defaulted the package version to dev for the UDS development workflow."
+    },
+    {
+      "path": "x-uds.spec.network.allow",
+      "value": "ingress and egress",
+      "message": "Inferred package-local network allow rules for generated workloads."
+    },
+    {
+      "path": "x-uds.spec.network.expose",
+      "value": "app",
+      "message": "Inferred a tenant gateway exposure from the service's published ports."
+    },
+    {
+      "path": "x-uds.spec.sso",
+      "value": "app",
+      "message": "Inferred default SSO client configuration from the service exposure."
+    }
+  ],
+  "ignored": [
+    {
+      "path": "services.app.image",
+      "message": "Local build services use a generated internal image reference instead of the Compose image setting."
+    },
+    {
+      "path": "services.app.restart",
+      "message": "Kubernetes controls workload restarts, so the Compose restart policy is not translated."
+    }
+  ],
+  "rejected": []
+}

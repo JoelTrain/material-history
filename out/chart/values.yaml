@@ -1,0 +1,22 @@
+additionalNetworkAllow: []
+environment:
+    app:
+        DATABASE_URL: file:/app/data/material-history.db
+        HOSTNAME: 0.0.0.0
+        NEXT_PUBLIC_DEMO_MODE: "true"
+        NEXT_PUBLIC_SITE_URL: http://localhost:3000
+        NODE_ENV: production
+        PAYLOAD_SECRET: demo-only-do-not-use-in-production
+        PORT: "3000"
+resources:
+    app:
+        requests:
+            cpu: ""
+            memory: ""
+        limits:
+            cpu: ""
+            memory: ""
+secrets: {}
+uds:
+    domain: uds.dev
+    subdomain: ""
