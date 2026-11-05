@@ -30,6 +30,7 @@ COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 # There is no public/ directory in this repository at present.
 RUN mkdir -p /app/data && chown -R node:node /app/data
+COPY --from=builder --chown=node:node /app/docker/start.mjs ./start.mjs
 USER node
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["node", "start.mjs"]
