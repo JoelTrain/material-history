@@ -67,17 +67,22 @@ jobs:
             printf '\n\x60\x60\x60\n' >> ci-report.md
             gh pr comment 1 --body-file ci-report.md || true
           fi
-      - name: Smoke test development server
+      - name: Smoke test database-free demo server
         shell: bash
+        env:
+          NEXT_PUBLIC_DEMO_MODE: 'true'
         run: |
+          rm -f material-history-ci.db
           NODE_ENV=development pnpm dev > /tmp/material-history-dev.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 30); do
             status=$(curl -s -o /tmp/material-history-index.html -w '%{http_code}' http://localhost:3000/ || true)
             if [ "$status" = "200" ] && grep -q 'Material History' /tmp/material-history-index.html; then
-              echo 'Development server served the Material History homepage successfully'
-              exit 0
+              if grep -q 'DEMO MODE' /tmp/material-history-index.html && [ ! -f material-history-ci.db ]; then
+                echo 'Database-free demo homepage served successfully without creating SQLite database'
+                exit 0
+              fi
             fi
             sleep 4
           done
