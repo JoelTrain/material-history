@@ -1,52 +1,110 @@
 # Material History
 
-A standalone Next.js application for equipment, maintenance, and serialized-component history, backed by Payload CMS.
+Material History is a web application for managing equipment histories, maintenance records, serialized components, and review workflows.
 
-## Requirements
-- Node.js 24.22.1+ and pnpm 9, 10, or 11
-- Local persistent storage for development (SQLite)
-- A backed-up database and persistent media storage for production
+Built with **Next.js 16**, **React 19**, **Payload CMS 4 (beta)**, **TypeScript**, and **Tailwind CSS 4**.
 
-## Local setup
+> **Migration status:** The `chore/remove-figma-dependencies` branch removes Figma Make integration. Automated dependency installation, Payload generation, TypeScript checking, production build, and a development-server homepage smoke test have passed. Database write workflows, admin login, and persistent file storage still require hands-on testing before production use.
 
-```sh
+## Features
+
+- Equipment hierarchy and equipment records
+- Maintenance and material history records
+- Serialized-component tracking
+- Review and approval status workflows
+- Dashboard, search, and reporting interface
+- Payload CMS administration and API
+
+## Quick start (local)
+
+**Prerequisites:** Node.js 24.22.1 or newer, and Corepack / pnpm 10.
+
+```bash
+git clone https://github.com/tylertodd93-arch/material-history-2.git
+cd material-history-2
+git switch chore/remove-figma-dependencies
+
+corepack enable
+corepack prepare pnpm@10 --activate
+
 cp .env.example .env
-# Edit .env and set a long random PAYLOAD_SECRET. Do not commit it.
-corepack pnpm install
-corepack pnpm generate:importmap
-corepack pnpm generate:types
-corepack pnpm dev
+# Replace PAYLOAD_SECRET in .env with a strong, random value.
+# Example: openssl rand -hex 32
+
+pnpm install --frozen-lockfile
+pnpm generate:importmap
+pnpm generate:types
+pnpm dev
 ```
 
-Open `http://localhost:3000`. Admin UI is at `http://localhost:3000/admin`.
-Set up the first native Payload admin using the Payload initial-user setup flow. The existing `admins` collection remains the CMS administrator model. Subsequent administrators require admin access.
+Open **http://localhost:3000** for the app or **http://localhost:3000/admin** for Payload administration.
+
+For the initial Payload admin account, use the first-user setup flow in `/admin`; later administrator accounts require appropriate admin authorization.
+
+### Environment variables
+
+Copy `.env.example` to `.env` and provide:
+
+| Variable | Purpose | Local example |
+| --- | --- | --- |
+| `PAYLOAD_SECRET` | Required secret for Payload sessions and signing | Generate a long random value |
+| `DATABASE_URL` | SQLite database location for local development | `file:./material-history.db` |
+| `NEXT_PUBLIC_SITE_URL` | App base URL used for metadata | `http://localhost:3000` |
+
+Do not commit `.env`, credentials, or local databases.
+
+## Run in GitHub Codespaces
+
+A `.devcontainer` setup is included for browser-based development.
+
+1. [Create a Codespace on the migration branch](https://github.com/codespaces/new?repo=1447215897&ref=chore%2Fremove-figma-dependencies).
+2. Create the Codespace and let its setup script install dependencies and generate the Payload files.
+3. Run `pnpm dev` in the Codespaces terminal.
+4. Open the forwarded **port 3000** to view Material History.
+
+Codespaces may incur usage charges depending on your GitHub plan.
 
 ## Validation
 
-```sh
-corepack pnpm check:types
-corepack pnpm build
+```bash
+pnpm check:types
+pnpm build
 ```
 
-Regenerate and **commit** `pnpm-lock.yaml` after the first successful install. Existing npm/pnpm lockfiles were removed because they included the Figma plugin and no dependency install could be run while preparing this commit. Prefer a single package manager.
+GitHub Actions also runs these checks automatically. It installs dependencies, regenerates Payload types and the import map, builds the application, and smoke-tests the development server and homepage.
 
-## Migration notes
+[View validation workflow](https://github.com/tylertodd93-arch/material-history-2/actions/workflows/validate.yml)
 
-- Removed `@payloadcms/figma` and the platform-specific `buildFigmaConfig`.
-- Uses Payload's `buildConfig`, the official `@payloadcms/db-sqlite` adapter, and environment-based secrets.
-- Uses Payload's native admin authentication and default admin logout behavior instead of Figma SSO.
-- Stores media with Payload's default local upload behavior; production requires persistent volume or a supported storage adapter.
-- Removes Figma preview routes, image loader, generated Figma commands, and site settings.
-- The existing frontend, equipment, maintenance, and component data models were retained.
+**Latest confirmed checks (November 5, 2026):** Installation, Payload generation, TypeScript, production build, and homepage HTTP smoke test passed. This is not a substitute for end-to-end workflow testing.
 
-### Data preservation
+## Project structure
 
-**This source migration does not copy Figma Cloud content.** Export existing Payload records, admin accounts (recreate or migrate with secure password reset), and media from the previous environment before retiring it. Database IDs, relationships, and file paths must be mapped and verified during migration. Do not treat a clean local SQLite database as a copy of production data.
+| Directory | Purpose |
+| --- | --- |
+| `src/app/(frontend)` | Material History app routes, layout, and server actions |
+| `src/components` | Frontend application UI |
+| `src/collections` | Equipment, records, serialized components, admins, media, and related Payload collections |
+| `src/app/(payload)` | Payload CMS admin and API routes |
+| `src/payload.config.ts` | Standalone Payload configuration and SQLite adapter |
+| `src/data` | Mock/fallback UI data |
+| `.devcontainer` | Browser-based development environment |
+| `.github/workflows` | Automated checks |
 
-### Deployment
+## Moving away from Figma Make
 
-SQLite on local disk is suitable for development and persistent single-instance hosting. For scalable production, migrate to a supported managed database such as PostgreSQL and configure persistent media storage. Set `PAYLOAD_SECRET`, `DATABASE_URL`, and `NEXT_PUBLIC_SITE_URL` for your deployment target. Back up both the database and media.
+This branch removes `@payloadcms/figma`, Figma-specific Next.js configuration, image loader, preview routes, and managed Figma SSO integration. It configures the official Payload SQLite adapter, native Payload admin authentication, and local media uploads.
 
-### Validation status
+**The migration changes application source code, not hosted data.** Existing Figma Cloud database records, administrator identities, and uploaded media have **not** been exported or migrated.
 
-Files were prepared via the GitHub integration. Dependency installation, lockfile generation, type checking, and a production build have **not** been executed and are required before deployment. This repository currently targets Payload 4.0.0-beta.4; verify adapter compatibility and consider an intentional upgrade to stable Payload after functional testing.
+Before a real-world deployment:
+
+1. Verify first-admin onboarding, login/logout, and access permissions.
+2. Test creating, updating, and retrieving equipment, maintenance records, and serialized components.
+3. Verify approval workflow restrictions and file uploads.
+4. Migrate and reconcile existing database records and relationships, if needed.
+5. Use durable, backed-up database and file storage. Local SQLite and uploads require a persistent disk; ephemeral hosting will lose data.
+6. Retest all critical workflows before merging the draft migration PR or deploying.
+
+## Branch and pull request
+
+The standalone migration is tracked in [pull request #1](https://github.com/tylertodd93-arch/material-history-2/pull/1). The `main` branch remains unchanged until the PR is intentionally merged.
