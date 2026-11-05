@@ -13,6 +13,7 @@ import { Tags } from './collections/Tags'
 import { Equipment } from './collections/Equipment'
 import { MaterialRecords } from './collections/MaterialRecords'
 import { SerializedComponents } from './collections/SerializedComponents'
+import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -28,6 +29,8 @@ export default buildConfig({
           : 'file:./material-history.db' },
       })
     : postgresAdapter({
+        // Apply checked-in, versioned migrations when the production server starts.
+        prodMigrations: migrations,
         pool: {
           connectionString: (() => {
             const url = process.env.DATABASE_URL

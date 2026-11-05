@@ -22,7 +22,7 @@ docker compose -f compose.yaml -f compose.postgres.yaml ps
 
 The PostgreSQL service is not exposed on a host port; the app accesses `db:5432` over the Compose network. Data is stored in the named `postgres-data` Docker volume. The application is exposed on port 3000.
 
-**Schema prerequisite:** Use the Payload migrations workflow to initialize or update a non-demo database before using the app. Development can use Payload's schema push; production must run committed migrations. See below.
+**Schema initialization:** This application includes a checked-in PostgreSQL migration and passes it to Payload's `prodMigrations` option, so a production server applies outstanding migrations when it first connects to an empty database. Review migrations before deploying, and take a backup before upgrades.
 
 ## Connect to an existing PostgreSQL database
 
@@ -32,7 +32,7 @@ For Compose, override the app's `DATABASE_URL` in your deployment Compose config
 
 ## Schema migrations
 
-Payload's PostgreSQL adapter automatically synchronizes the schema in **development mode**. For an actual production deployment, generate and commit migrations as part of development and run them before starting the server:
+Payload's PostgreSQL adapter automatically synchronizes the schema in **development mode**. For future database model changes, generate and commit migration files during development. The production server will run committed migrations on startup:
 
 ```sh
 # Against a disposable development PostgreSQL instance:
