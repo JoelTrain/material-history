@@ -1,0 +1,108 @@
+name: Validate standalone Material History
+on:
+  push:
+    branches:
+      - chore/remove-figma-dependencies
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      PAYLOAD_SECRET: ci-only-secret-do-not-use-in-production
+      DATABASE_URL: file:./material-history-ci.db
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NODE_ENV: production
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Activate pnpm
+        run: corepack enable && corepack prepare pnpm@10 --activate
+      - name: Install dependencies and generate lockfile
+        run: pnpm install --no-frozen-lockfile
+      - name: Generate Payload import map
+        run: pnpm generate:importmap
+      - name: Generate Payload types
+        run: pnpm generate:types
+      - name: Check types
+        shell: bash
+        run: |
+          pnpm check:types 2>&1 | tee typecheck.log
+          exit ${PIPESTATUS[0]}
+      - name: Report TypeScript failures
+        if: failure()
+        shell: bash
+        run: |
+          if [ -s typecheck.log ]; then
+            printf '### Material History TypeScript validation errors\n\n\x60\x60\x60text\n' > ci-report.md
+            tail -c 30000 typecheck.log >> ci-report.md
+            printf '\n\x60\x60\x60\n' >> ci-report.md
+            gh pr comment 1 --body-file ci-report.md || true
+          fi
+      - name: Production build
+        shell: bash
+        run: |
+          pnpm build 2>&1 | tee build.log
+          exit ${PIPESTATUS[0]}
+      - name: Report build failures
+        if: failure()
+        shell: bash
+        run: |
+          if [ -s build.log ]; then
+            printf '### Material History production build errors\n\n\x60\x60\x60text\n' > ci-report.md
+            tail -c 30000 build.log >> ci-report.md
+            printf '\n\x60\x60\x60\n' >> ci-report.md
+            gh pr comment 1 --body-file ci-report.md || true
+          fi
+      - name: Smoke test database-free demo server
+        shell: bash
+        env:
+          NEXT_PUBLIC_DEMO_MODE: 'true'
+        run: |
+          rm -f material-history-ci.db
+          NODE_ENV=development pnpm dev > /tmp/material-history-dev.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            status=$(curl -s -o /tmp/material-history-index.html -w '%{http_code}' http://localhost:3000/ || true)
+            if [ "$status" = "200" ] && grep -q 'Material History' /tmp/material-history-index.html; then
+              if grep -q 'DEMO MODE' /tmp/material-history-index.html && [ ! -f material-history-ci.db ]; then
+                echo 'Database-free demo homepage served successfully without creating SQLite database'
+                exit 0
+              fi
+            fi
+            sleep 4
+          done
+          cat /tmp/material-history-dev.log
+          exit 1
+      - name: Commit resolved lockfile on branch
+        if: github.event_name == 'push' && success()
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: lock standalone dependencies"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+      - name: Upload generated lockfile
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-pnpm-lock
+          path: pnpm-lock.yaml
+          if-no-files-found: ignore
