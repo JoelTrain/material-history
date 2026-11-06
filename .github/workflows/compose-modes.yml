@@ -57,11 +57,7 @@ jobs:
                 echo "PostgreSQL mode leaked a demo-only banner or sample vessel"
                 exit 1
               fi
-              python3 - <<'PY'
-          import json
-          response = json.load(open('/tmp/equipment.json'))
-          assert response['totalDocs'] == 0, 'A fresh PostgreSQL database must have no seeded equipment'
-          PY
+              python3 -c "import json; assert json.load(open('/tmp/equipment.json'))['totalDocs'] == 0, 'Fresh PostgreSQL database unexpectedly contains equipment'"
               exit 0
             fi
             sleep 4
