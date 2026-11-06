@@ -34,7 +34,7 @@ variables:
       default: ""
     - name: APP_DATABASE_URL
       description: Value for DATABASE_URL environment variable on compose service app
-      default: postgresql://material_history:demo-only-change-me@db:5432/material_history
+      default: ""
     - name: APP_HOSTNAME
       description: Value for HOSTNAME environment variable on compose service app
       default: 0.0.0.0
@@ -49,7 +49,7 @@ variables:
       default: production
     - name: APP_PAYLOAD_SECRET
       description: Value for PAYLOAD_SECRET environment variable on compose service app
-      default: demo-only-do-not-use-in-production
+      default: 1b9aacbed627c3045a0650435fc4cb9ed1c14ff3572fed6c7fe66a86ca20f5ca
     - name: APP_PORT
       description: Value for PORT environment variable on compose service app
       default: "3000"
@@ -70,7 +70,7 @@ variables:
       default: material_history
     - name: DB_POSTGRES_PASSWORD
       description: Value for POSTGRES_PASSWORD environment variable on compose service db
-      default: demo-only-change-me
+      default: 1b9aacbed627c3045a0650435fc4cb9ed1c14ff3572fed6c7fe66a86ca20f5ca
     - name: DB_POSTGRES_USER
       description: Value for POSTGRES_USER environment variable on compose service db
       default: material_history
