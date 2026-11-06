@@ -52,6 +52,16 @@ jobs:
         run: |
           for attempt in $(seq 1 60); do
             if curl -fsS http://localhost:3000/api/equipment -o /tmp/equipment.json && grep -q '"docs"' /tmp/equipment.json; then
+              curl -fsS http://localhost:3000/ -o /tmp/postgres-home.html
+              if grep -q 'DEMO MODE' /tmp/postgres-home.html || grep -q 'USS Example' /tmp/postgres-home.html; then
+                echo "PostgreSQL mode leaked a demo-only banner or sample vessel"
+                exit 1
+              fi
+              python3 - <<'PY'
+          import json
+          response = json.load(open('/tmp/equipment.json'))
+          assert response['totalDocs'] == 0, 'A fresh PostgreSQL database must have no seeded equipment'
+          PY
               exit 0
             fi
             sleep 4
