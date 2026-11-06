@@ -1067,7 +1067,12 @@ function EquipmentPage({
       setDetailView('overview')
     }
   }, [requestedEquipment, equipmentTree])
-  const item = equipmentTree.find((e) => e.id === selected) || equipmentTree[3]
+  const item = equipmentTree.find((e) => e.id === selected) || equipmentTree[3] || { 
+    id: 'none', 
+    name: 'n/a',
+    code: 'n/a',
+    count: 0,
+  }
   const hierarchy = getBreadcrumb(item.id, equipmentTree)
   const equipmentScope = new Set([item.id])
   let scopeExpanded = true
