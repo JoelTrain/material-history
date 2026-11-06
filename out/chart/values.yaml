@@ -3,7 +3,7 @@ environment:
     app:
         DATABASE_URL: postgresql://material_history:demo-only-change-me@db:5432/material_history
         HOSTNAME: 0.0.0.0
-        NEXT_PUBLIC_DEMO_MODE: "true"
+        NEXT_PUBLIC_DEMO_MODE: "false"
         NEXT_PUBLIC_SITE_URL: http://localhost:3000
         NODE_ENV: production
         PAYLOAD_SECRET: demo-only-do-not-use-in-production
