@@ -17,6 +17,20 @@ spec:
             labels:
                 app.kubernetes.io/name: app
         spec:
+            initContainers:
+                - name: wait-db
+                  image: ghcr.io/defenseunicorns/compose-bridge-uds/wait@sha256:5a1f8bb73a3eae5650460e95bf438d74d33532e8633d3a7aacada266849763a7
+                  imagePullPolicy: IfNotPresent
+                  args:
+                    - db:5432
+                  securityContext:
+                    readOnlyRootFilesystem: true
+                    allowPrivilegeEscalation: false
+                    runAsNonRoot: true
+                    runAsUser: 65532
+                    capabilities:
+                        drop:
+                            - ALL
             containers:
                 - name: app
                   image: zarf.internal/material-history-app:dev

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: db-environment
+    namespace: '{{ .Release.Namespace }}'
+    labels:
+        app.kubernetes.io/name: db
+        app.kubernetes.io/part-of: material-history
+        uds.dev/pod-reload: "true"
+data:
+    POSTGRES_DB: {{ index .Values.environment "db" "POSTGRES_DB" | quote }}
+    POSTGRES_PASSWORD: {{ index .Values.environment "db" "POSTGRES_PASSWORD" | quote }}
+    POSTGRES_USER: {{ index .Values.environment "db" "POSTGRES_USER" | quote }}

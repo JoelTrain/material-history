@@ -11,13 +11,21 @@ This report records how settings from the Compose model were handled during UDS 
 | `services.app.build.args` | generated Buildx Bake service | Translated this Compose setting into generated package configuration. |
 | `services.app.build.context` | generated Buildx Bake service | Translated this Compose setting into generated package configuration. |
 | `services.app.build.dockerfile` | generated Buildx Bake service | Translated this Compose setting into generated package configuration. |
+| `services.app.depends_on` | Deployment dependency init containers | Translated this Compose setting into generated package configuration. |
 | `services.app.environment` | environment ConfigMap and deploy-time variables | Translated this Compose setting into generated package configuration. |
 | `services.app.expose` | Kubernetes Service ports | Translated this Compose setting into generated package configuration. |
 | `services.app.healthcheck` | Deployment liveness probe | Translated this Compose setting into generated package configuration. |
 | `services.app.networks` | UDS network policy selectors | Translated this Compose setting into generated package configuration. |
 | `services.app.ports` | Kubernetes Service ports | Translated this Compose setting into generated package configuration. |
 | `services.app.volumes[0]` | Deployment volume mount | Translated this Compose setting into generated package configuration. |
+| `services.db.environment` | environment ConfigMap and deploy-time variables | Translated this Compose setting into generated package configuration. |
+| `services.db.expose` | Kubernetes Service ports | Translated this Compose setting into generated package configuration. |
+| `services.db.healthcheck` | Deployment liveness probe | Translated this Compose setting into generated package configuration. |
+| `services.db.image` | Zarf package image and Deployment container image | Translated this Compose setting into generated package configuration. |
+| `services.db.networks` | UDS network policy selectors | Translated this Compose setting into generated package configuration. |
+| `services.db.volumes[0]` | Deployment volume mount | Translated this Compose setting into generated package configuration. |
 | `volumes.material-history-data` | PersistentVolumeClaim | Translated this Compose setting into generated package configuration. |
+| `volumes.postgres-data` | PersistentVolumeClaim | Translated this Compose setting into generated package configuration. |
 
 ## Inferred settings
 
@@ -36,6 +44,7 @@ This report records how settings from the Compose model were handled during UDS 
 | --- | --- | --- |
 | `services.app.image` | - | Local build services use a generated internal image reference instead of the Compose image setting. |
 | `services.app.restart` | - | Kubernetes controls workload restarts, so the Compose restart policy is not translated. |
+| `services.db.restart` | - | Kubernetes controls workload restarts, so the Compose restart policy is not translated. |
 
 ## Rejected settings
 

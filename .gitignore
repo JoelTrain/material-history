@@ -10,3 +10,4 @@ node_modules/
 *.sqlite
 *.sqlite3
 *.tar.zst
+*.tar

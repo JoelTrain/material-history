@@ -27,6 +27,10 @@ Set `NEXT_PUBLIC_DEMO_MODE=true` in your `.env` file (included in `.env.example`
 - Payload CMS routes such as `/admin` and `/api` are **not part of database-free mode**; they still need a database and the real Payload authentication setup.
 - To return to database-backed behavior, set `NEXT_PUBLIC_DEMO_MODE=false` and restart the server. The existing Payload CMS configuration is unchanged.
 
+## PostgreSQL-backed operation
+
+Set `NEXT_PUBLIC_DEMO_MODE=false` to use Payload CMS against PostgreSQL. For a local Docker database, see [PostgreSQL setup and migrations](POSTGRES.md). Demo mode remains available without a database.
+
 ## Quick start (local)
 
 **Prerequisites:** Node.js 24.22.1 or newer, and Corepack / pnpm 10.
@@ -120,3 +124,14 @@ Before a real-world deployment:
 ## Branch and pull request
 
 The standalone migration is tracked in [pull request #1](https://github.com/tylertodd93-arch/material-history-2/pull/1). The `main` branch remains unchanged until the PR is intentionally merged.
+
+## Single-file Docker Compose
+
+Use [compose.yaml](compose.yaml) for both modes:
+
+```sh
+docker compose up --build -d                    # demo: no PostgreSQL service
+docker compose --profile postgres up --build -d # PostgreSQL: set .env first
+```
+
+For PostgreSQL, set `NEXT_PUBLIC_DEMO_MODE=false` and secure credentials in `.env` **before building**. See [DOCKER.md](DOCKER.md).

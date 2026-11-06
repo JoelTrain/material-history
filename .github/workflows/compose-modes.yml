@@ -1,0 +1,68 @@
+name: Verify unified Compose modes
+on:
+  push:
+    branches: [chore/unify-compose]
+  pull_request:
+    branches: [main]
+    paths: [compose.yaml, Dockerfile, docker/start.mjs, .github/workflows/compose-modes.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check demo does not include the PostgreSQL service
+        run: |
+          docker compose config --quiet
+          ! docker compose config --services | grep -qx db
+      - name: Start demo
+        run: docker compose up --build -d
+      - name: Smoke test demo
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/ -o /tmp/home.html && grep -q 'DEMO MODE' /tmp/home.html; then exit 0; fi
+            sleep 4
+          done
+          docker compose logs
+          exit 1
+      - if: always()
+        run: docker compose down
+
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_DEMO_MODE: 'false'
+      PAYLOAD_SECRET: ci-test-secret-not-for-production
+      POSTGRES_PASSWORD: ci-postgres-unique-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check PostgreSQL profile
+        run: |
+          docker compose --profile postgres config --quiet
+          docker compose --profile postgres config --services | grep -qx db
+      - name: Start PostgreSQL and app
+        run: docker compose --profile postgres up --build -d
+      - name: Smoke test Payload API
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/api/equipment -o /tmp/equipment.json && grep -q '"docs"' /tmp/equipment.json; then
+              curl -fsS http://localhost:3000/ -o /tmp/postgres-home.html
+              if grep -q 'DEMO MODE' /tmp/postgres-home.html || grep -q 'USS Example' /tmp/postgres-home.html; then
+                echo "PostgreSQL mode leaked a demo-only banner or sample vessel"
+                exit 1
+              fi
+              python3 -c "import json; assert json.load(open('/tmp/equipment.json'))['totalDocs'] == 0, 'Fresh PostgreSQL database unexpectedly contains equipment'"
+              exit 0
+            fi
+            sleep 4
+          done
+          docker compose --profile postgres logs
+          exit 1
+      - if: always()
+        run: docker compose --profile postgres down

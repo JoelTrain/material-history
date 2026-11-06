@@ -6,7 +6,6 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # NEXT_PUBLIC_* values are fixed in the built Next.js bundle.
         NEXT_PUBLIC_DEMO_MODE: ${NEXT_PUBLIC_DEMO_MODE:-true}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
     image: material-history:local
@@ -19,22 +18,38 @@ services:
       HOSTNAME: 0.0.0.0
       NEXT_PUBLIC_DEMO_MODE: ${NEXT_PUBLIC_DEMO_MODE:-true}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
-      # Use a real secret in .env for database-backed deployments.
       PAYLOAD_SECRET: ${PAYLOAD_SECRET:-demo-only-do-not-use-in-production}
-      DATABASE_URL: file:/app/data/material-history.db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-material_history}:${POSTGRES_PASSWORD:-demo-only-change-me}@${POSTGRES_HOST:-db}:5432/${POSTGRES_DB:-material_history}
     volumes:
-      # Named volume retains SQLite data across container replacement when enabled.
       - material-history-data:/app/data
+    # Optional: demo mode must not start PostgreSQL.
+    depends_on:
+      db:
+        condition: service_healthy
+        required: false
     healthcheck:
-      test:
-        - CMD
-        - node
-        - -e
-        - "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
 
+  db:
+    profiles: ["postgres"]
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-material_history}
+      POSTGRES_USER: ${POSTGRES_USER:-material_history}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-demo-only-change-me}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-material_history} -d ${POSTGRES_DB:-material_history}"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
 volumes:
   material-history-data:
+  postgres-data:
