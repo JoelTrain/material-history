@@ -281,8 +281,8 @@ export default function App({
         </div>
         <div className="vessel">
           <span>ACTIVE VESSEL</span>
-          <strong>USS Example</strong>
-          <small>SSN-999</small>
+          <strong>{demoMode ? 'USS Example' : 'No vessel selected'}</strong>
+          {demoMode && <small>SSN-999</small>}
         </div>
         <nav>
           {nav.map(([id, label, icon]) => (
@@ -303,7 +303,7 @@ export default function App({
             </button>
           ))}
         </nav>
-        <div className="demo-role">
+        {demoMode && <div className="demo-role">
           <label>DEMO ROLE</label>
           <select value={role} onChange={(e) => setRole(e.target.value as Role)}>
             {Object.keys(users).map((r) => (
@@ -311,15 +311,15 @@ export default function App({
             ))}
           </select>
           <p>Simulation only — not production authentication.</p>
-        </div>
-        <div className="user-card">
+        </div>}
+        {demoMode && <div className="user-card">
           <div className="avatar">{users[role].initials}</div>
           <div>
             <strong>{users[role].name}</strong>
             <span>{users[role].title}</span>
           </div>
           <Icon name="more" />
-        </div>
+        </div>}
       </aside>
       {mobileNav && <div className="scrim" onClick={() => setMobileNav(false)} />}
       <div className="main">
@@ -330,7 +330,7 @@ export default function App({
           <div>
             <h1>{pageTitles[page]}</h1>
             <p>
-              USS Example <span>/</span> SSN-999
+              {demoMode ? <>USS Example <span>/</span> SSN-999</> : 'Material History'}
             </p>
           </div>
           <div className="top-actions">
@@ -362,6 +362,7 @@ export default function App({
               openComponent={openComponent}
               go={go}
               create={setCreateType}
+              demoMode={demoMode}
             />
           )}
           {page === 'search' && (
@@ -559,7 +560,9 @@ function Dashboard({
   openComponent,
   go,
   create,
+  demoMode,
 }: {
+  demoMode: boolean
   records: RecordItem[]
   components: ComponentItem[]
   openRecord: (id: string) => void
@@ -572,8 +575,8 @@ function Dashboard({
     <div className="page">
       <div className="page-heading">
         <div>
-          <h2>Good morning, Alex</h2>
-          <p>Here’s what requires attention across USS Example today.</p>
+          <h2>{demoMode ? 'Good morning, Alex' : 'Material history overview'}</h2>
+          <p>{demoMode ? 'Here’s what requires attention across USS Example today.' : 'Current records and components in the database.'}</p>
         </div>
         <Button icon="plus" onClick={() => create('Maintenance')}>
           Create maintenance entry
@@ -585,7 +588,7 @@ function Dashboard({
           tone="navy"
           label="Total maintenance records"
           value={records.length.toLocaleString()}
-          note="+12 this month"
+          note={demoMode ? '+12 this month' : 'Based on saved records'}
         />
         <Stat
           icon="box"
@@ -599,14 +602,14 @@ function Dashboard({
           tone="amber"
           label="Pending my approval"
           value={records.filter((r) => r.status.includes('Pending')).length.toString()}
-          note="4 due within 48 hours"
+          note={demoMode ? '4 due within 48 hours' : 'Pending records'}
         />
         <Stat
           icon="check"
           tone="green"
           label="Recently approved"
           value={approved.toString()}
-          note="Last 30 days"
+          note={demoMode ? 'Last 30 days' : 'All approved records'}
         />
       </div>
       <div className="dashboard-grid">
@@ -838,7 +841,7 @@ function SearchPage({
       <div className="page-heading">
         <div>
           <h2>Find material history</h2>
-          <p>Search maintenance records and serialized components across USS Example.</p>
+          <p>Search maintenance records and serialized components.</p>
         </div>
       </div>
       <section className="search-hero">
@@ -1131,7 +1134,7 @@ function EquipmentPage({
           </div>
           <div className="tree-root">
             <strong>
-              <Icon name="shield" size={16} /> USS Example <small>SSN-999</small>
+              <Icon name="shield" size={16} /> Equipment hierarchy
             </strong>
             {equipmentTree.map((e) => (
               <button
@@ -1617,7 +1620,7 @@ function MaintenancePage({
     <div className="page">
       <div className="page-heading">
         <div>
-          <span className="eyebrow">ALL SERIALIZED COMPONENTS · USS EXAMPLE</span>
+          <span className="eyebrow">ALL SERIALIZED COMPONENTS</span>
           <h2>Component Maintenance History</h2>
           <p>A running list of maintenance completed against every tracked component.</p>
         </div>
@@ -1736,7 +1739,7 @@ function ComponentsPage({
           tone="navy"
           label="Registered components"
           value={components.length.toString()}
-          note="USS Example scope"
+          note="Tracked in application"
         />
         <Stat
           icon="check"
@@ -2588,7 +2591,7 @@ function AdminPage({
       <div className="page-heading">
         <div>
           <h2>Administration</h2>
-          <p>Manage USS Example equipment, components, and demonstration roles.</p>
+          <p>Manage equipment, serialized components, and application settings.</p>
         </div>
         <Button
           icon="plus"
@@ -3543,7 +3546,7 @@ function initials(name: string) {
     .join('')
 }
 function getBreadcrumb(id: string, equipmentTree: EquipmentItem[]) {
-  const result = ['USS Example']
+  const result = ['Equipment']
   let item = equipmentTree.find((e) => e.id === id)
   const stack: string[] = []
   while (item) {
