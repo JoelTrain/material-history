@@ -8,10 +8,13 @@ metadata:
         app.kubernetes.io/part-of: material-history
         uds.dev/pod-reload: "true"
 data:
-    DATABASE_URL: {{ index .Values.environment "app" "DATABASE_URL" | quote }}
+    DATABASE_URL: {{ index .Values.environment "app" "DATABASE_URL" | default (print "postgresql://" (index .Values.environment "db" "POSTGRES_USER") ":" (index .Values.environment "db" "POSTGRES_PASSWORD") "@db:5432/" (index .Values.environment "db" "POSTGRES_DB")) | quote }}
     HOSTNAME: {{ index .Values.environment "app" "HOSTNAME" | quote }}
     NEXT_PUBLIC_DEMO_MODE: {{ index .Values.environment "app" "NEXT_PUBLIC_DEMO_MODE" | quote }}
     NEXT_PUBLIC_SITE_URL: {{ index .Values.environment "app" "NEXT_PUBLIC_SITE_URL" | quote }}
     NODE_ENV: {{ index .Values.environment "app" "NODE_ENV" | quote }}
     PAYLOAD_SECRET: {{ index .Values.environment "app" "PAYLOAD_SECRET" | quote }}
+    POSTGRES_PASSWORD: {{ index .Values.environment "db" "POSTGRES_PASSWORD" | quote }}
+    POSTGRES_USER: {{ index .Values.environment "db" "POSTGRES_USER" | quote }}
+    POSTGRES_DB: {{ index .Values.environment "db" "POSTGRES_DB" | quote }}
     PORT: {{ index .Values.environment "app" "PORT" | quote }}

@@ -1,54 +1,62 @@
 # Docker deployment
 
-This repository supports a production-mode Next.js Docker image. **Docker Compose starts in database-free demo mode by default**, using sample records.
+Material History uses **one `compose.yaml`** for database-free demo and PostgreSQL-backed operation.
 
-## Demo: no database setup
+## Demo (default; no database server)
 
-```bash
+```sh
 docker compose up --build -d
-docker compose ps
 ```
 
-Open **http://localhost:3000**. The demo does not require initializing SQLite. Demo changes live in the browser's `localStorage` and are not shared across devices or browsers.
+Open http://localhost:3000. PostgreSQL is not started, and sample records are stored only in the browser.
 
-Stop it with `docker compose down` (the named volume remains).
+## PostgreSQL mode
 
-## Build and run an image without Compose
+1. Copy `.env.example` to `.env`.
+2. Set `NEXT_PUBLIC_DEMO_MODE=false`, a random `PAYLOAD_SECRET` (e.g. `openssl rand -hex 32`), and a strong `POSTGRES_PASSWORD`.
+3. Start the app and its local database:
 
-```bash
-docker build --build-arg NEXT_PUBLIC_DEMO_MODE=true -t material-history:local .
-docker run --rm -p 3000:3000 -e NEXT_PUBLIC_DEMO_MODE=true -e PAYLOAD_SECRET=demo-only-not-for-production material-history:local
+```sh
+docker compose --profile postgres up --build -d
+docker compose --profile postgres ps
 ```
 
-## Enable a database-backed environment
+The `postgres` profile enables the `db` service. It is not started for demo mode. PostgreSQL data is stored in a named `postgres-data` volume, not exposed on a host port. The app waits for a healthy database before starting and Payload applies checked-in production migrations.
 
-1. Create `.env` with a strong randomly generated `PAYLOAD_SECRET` (run `openssl rand -hex 32`).
-2. Set `NEXT_PUBLIC_DEMO_MODE=false` in `.env`.
-3. Rebuild the image with `docker compose up --build -d`.
+## Switch back to demo
 
-The Compose SQLite URL points to `file:/app/data/material-history.db`, stored in the named `material-history-data` volume. **This configuration provides persistent database files but does not initialize or migrate schema/data**, nor does it verify administrator login or upload persistence. The existing Payload CMS first-user process and schema initialization must be completed for actual database-backed use. Back up the volume before upgrades.
+```sh
+docker compose --profile postgres down
+# Set NEXT_PUBLIC_DEMO_MODE=true in .env, then:
+docker compose up --build -d
+```
 
-SQLite is intended for development or limited single-instance use. Use a managed database and a durable upload storage solution for multi-instance production deployment.
+Switching requires **rebuilding** because Next.js embeds `NEXT_PUBLIC_DEMO_MODE` during compilation. Use `docker compose --profile postgres down` to stop the database service as well.
+
+## External PostgreSQL
+
+Set `NEXT_PUBLIC_DEMO_MODE=false`, `POSTGRES_HOST`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` in `.env`. Run `docker compose up --build -d` **without** `--profile postgres`. The Compose connection string targets your external PostgreSQL host. Configure network permissions and provider-required TLS separately before exposing the app publicly.
 
 ## Configuration
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `PORT` | `3000` | Host port published by Compose |
-| `NEXT_PUBLIC_DEMO_MODE` | `true` | Enable browser-based mock mode |
-| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | Public site URL used for metadata |
-| `PAYLOAD_SECRET` | Insecure **demo-only** placeholder | Required, set a strong secret before real use |
+| `NEXT_PUBLIC_DEMO_MODE` | `true` | Use mock data instead of PostgreSQL |
+| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | Public URL; build-time setting |
+| `PORT` | `3000` | Host port for app |
+| `PAYLOAD_SECRET` | Demo placeholder | Required secure value for PostgreSQL mode |
+| `POSTGRES_PASSWORD` | Demo placeholder | Required strong password for PostgreSQL mode |
+| `POSTGRES_USER` | `material_history` | DB user |
+| `POSTGRES_DB` | `material_history` | DB name |
+| `POSTGRES_HOST` | `db` | PostgreSQL hostname |
 
-`NEXT_PUBLIC_*` values are bundled during the image build. Changing either requires rebuilding the Docker image, not just restarting a container.
+The container start script rejects demo-only credentials in non-demo mode. Do not commit `.env`.
 
-To build and launch:
+## Important
 
-```bash
-docker compose config
-docker compose up --build -d
-docker compose logs -f app
-```
-
-Use `docker compose down` to stop. Do not use `docker compose down -v` unless you intend to **delete the persistent SQLite volume**.
-
-The frontend demo can run without a database, but **Payload /admin and /api routes still require the real database**. Demo role switching is not real authentication. Do not expose a demo deployment as a production system with real information.
+- Demo role switching is not authentication; the demo should not contain real data.
+- Some approval/editing UI flows still need server-side persistence and authorization.
+- Existing SQLite/Figma records are **not** automatically imported into PostgreSQL.
+- Persistent uploaded media needs durable storage separately.
+- Back up the PostgreSQL volume and review schema migrations before updating.
+- `docker compose down` preserves volumes; `docker compose down -v` **deletes stored database data**.

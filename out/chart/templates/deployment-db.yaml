@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: db
+    namespace: '{{ .Release.Namespace }}'
+    labels:
+        app.kubernetes.io/name: db
+        app.kubernetes.io/part-of: material-history
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: db
+    template:
+        metadata:
+            name: ""
+            labels:
+                app.kubernetes.io/name: db
+        spec:
+            # Volume group ownership is managed by the kubelet or supporting CSI driver.
+            # PostgreSQL 17 Debian uses UID/GID 999; do not depend on root chown in the entrypoint.
+            securityContext:
+                fsGroup: 999
+                fsGroupChangePolicy: OnRootMismatch
+                seccompProfile:
+                    type: RuntimeDefault
+            containers:
+                - name: db
+                  image: postgres:17-bookworm
+                  imagePullPolicy: IfNotPresent
+                  envFrom:
+                    - configMapRef:
+                        name: db-environment
+                  env:
+                    # Keep initdb away from the PVC mount root so the non-root user
+                    # owns the directory on which it must set 0700 permissions.
+                    # IMPORTANT: existing clusters using the volume root as PGDATA
+                    # must migrate the database files before switching paths.
+                    - name: PGDATA
+                      value: /var/lib/postgresql/data/pgdata
+                  securityContext:
+                    runAsNonRoot: true
+                    runAsUser: 999
+                    runAsGroup: 999
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                        drop:
+                            - ALL
+                  ports:
+                    - name: port-5432-tcp
+                      containerPort: 5432
+                      protocol: TCP
+                  volumeMounts:
+                    - name: volume-postgres-data
+                      mountPath: /var/lib/postgresql/data
+                  # startupProbe gates liveness/readiness during initdb and recovery.
+                  startupProbe:
+                    exec:
+                        command:
+                            - /bin/sh
+                            - -ec
+                            - 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+                    periodSeconds: 5
+                    timeoutSeconds: 5
+                    failureThreshold: 60
+                  readinessProbe:
+                    exec:
+                        command:
+                            - /bin/sh
+                            - -ec
+                            - 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+                    periodSeconds: 10
+                    timeoutSeconds: 5
+                    failureThreshold: 3
+                  livenessProbe:
+                    exec:
+                        command:
+                            - /bin/sh
+                            - -ec
+                            - 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+                    periodSeconds: 20
+                    timeoutSeconds: 5
+                    failureThreshold: 6
+                  # {{ $allResources := .Values.resources | default (dict) }}
+                  # {{ $serviceResources := (index $allResources "db") | default (dict) }}
+                  # {{ $requests := (index $serviceResources "requests") | default (dict) }}
+                  # {{ $limits := (index $serviceResources "limits") | default (dict) }}
+                  # {{ $cpuRequest := (index $requests "cpu") | default "" }}
+                  # {{ $memoryRequest := (index $requests "memory") | default "" }}
+                  # {{ $cpuLimit := (index $limits "cpu") | default "" }}
+                  # {{ $memoryLimit := (index $limits "memory") | default "" }}
+                  # {{ if or $cpuRequest $memoryRequest $cpuLimit $memoryLimit }}
+                  resources:
+                      # {{ if or $cpuRequest $memoryRequest }}
+                      requests:
+                          # {{ with $cpuRequest }}
+                          cpu: "{{ . }}"
+                          # {{ end }}
+                          # {{ with $memoryRequest }}
+                          memory: "{{ . }}"
+                          # {{ end }}
+                      # {{ end }}
+                      # {{ if or $cpuLimit $memoryLimit }}
+                      limits:
+                          # {{ with $cpuLimit }}
+                          cpu: "{{ . }}"
+                          # {{ end }}
+                          # {{ with $memoryLimit }}
+                          memory: "{{ . }}"
+                          # {{ end }}
+                      # {{ end }}
+                  # {{ end }}
+            volumes:
+                - name: volume-postgres-data
+                  persistentVolumeClaim:
+                    claimName: postgres-data

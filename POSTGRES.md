@@ -7,7 +7,7 @@ Material History supports two separate modes:
 | **Frontend demo** | `NEXT_PUBLIC_DEMO_MODE=true` | Sample records and browser localStorage | Simulated role picker; not authentication |
 | **PostgreSQL-backed** | `NEXT_PUBLIC_DEMO_MODE=false` | Payload CMS tables in PostgreSQL | Payload `/admin` authentication |
 
-The default `compose.yaml` is unchanged in behavior: `docker compose up --build -d` runs the browser-only demo with no database setup.
+The unified `compose.yaml` still defaults to demo mode: `docker compose up --build -d` runs the browser-only demo with no database setup.
 
 ## Start with local PostgreSQL (Docker)
 
@@ -16,8 +16,8 @@ The default `compose.yaml` is unchanged in behavior: `docker compose up --build 
 3. Build and start PostgreSQL and the app:
 
 ```sh
-docker compose -f compose.yaml -f compose.postgres.yaml up --build -d
-docker compose -f compose.yaml -f compose.postgres.yaml ps
+docker compose --profile postgres up --build -d
+docker compose --profile postgres ps
 ```
 
 The PostgreSQL service is not exposed on a host port; the app accesses `db:5432` over the Compose network. Data is stored in the named `postgres-data` Docker volume. The application is exposed on port 3000.
@@ -28,7 +28,7 @@ The PostgreSQL service is not exposed on a host port; the app accesses `db:5432`
 
 Configure `NEXT_PUBLIC_DEMO_MODE=false`, `PAYLOAD_SECRET` and `DATABASE_URL=postgresql://user:password@host:5432/database` in the application environment, then run your build/deployment. Hosted DB providers often require TLS: set the connection URI / pool SSL options appropriate to your provider.
 
-For Compose, override the app's `DATABASE_URL` in your deployment Compose configuration and omit the bundled `db` service. Do not expose your password to the browser or commit credentials. Check network access and TLS first.
+For Compose, set `POSTGRES_HOST`, `POSTGRES_USER`, `POSTGRES_DB`, and `POSTGRES_PASSWORD` for the external instance, and run without the `postgres` profile. Do not expose your password to the browser or commit credentials. Check network access and TLS first.
 
 ## Schema migrations
 

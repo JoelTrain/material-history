@@ -26,6 +26,11 @@
       "message": "Translated this Compose setting into generated package configuration."
     },
     {
+      "path": "services.app.depends_on",
+      "target": "Deployment dependency init containers",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
       "path": "services.app.environment",
       "target": "environment ConfigMap and deploy-time variables",
       "message": "Translated this Compose setting into generated package configuration."
@@ -56,7 +61,42 @@
       "message": "Translated this Compose setting into generated package configuration."
     },
     {
+      "path": "services.db.environment",
+      "target": "environment ConfigMap and deploy-time variables",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.db.expose",
+      "target": "Kubernetes Service ports",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.db.healthcheck",
+      "target": "Deployment liveness probe",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.db.image",
+      "target": "Zarf package image and Deployment container image",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.db.networks",
+      "target": "UDS network policy selectors",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "services.db.volumes[0]",
+      "target": "Deployment volume mount",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
       "path": "volumes.material-history-data",
+      "target": "PersistentVolumeClaim",
+      "message": "Translated this Compose setting into generated package configuration."
+    },
+    {
+      "path": "volumes.postgres-data",
       "target": "PersistentVolumeClaim",
       "message": "Translated this Compose setting into generated package configuration."
     }
@@ -100,6 +140,10 @@
     },
     {
       "path": "services.app.restart",
+      "message": "Kubernetes controls workload restarts, so the Compose restart policy is not translated."
+    },
+    {
+      "path": "services.db.restart",
       "message": "Kubernetes controls workload restarts, so the Compose restart policy is not translated."
     }
   ],

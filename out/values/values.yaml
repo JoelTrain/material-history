@@ -9,6 +9,10 @@ environment:
         NODE_ENV: '###ZARF_VAR_APP_NODE_ENV###'
         PAYLOAD_SECRET: '###ZARF_VAR_APP_PAYLOAD_SECRET###'
         PORT: '###ZARF_VAR_APP_PORT###'
+    db:
+        POSTGRES_DB: '###ZARF_VAR_DB_POSTGRES_DB###'
+        POSTGRES_PASSWORD: '###ZARF_VAR_DB_POSTGRES_PASSWORD###'
+        POSTGRES_USER: '###ZARF_VAR_DB_POSTGRES_USER###'
 resources:
     app:
         requests:
@@ -17,6 +21,13 @@ resources:
         limits:
             cpu: '###ZARF_VAR_APP_CPU_LIMIT###'
             memory: '###ZARF_VAR_APP_MEMORY_LIMIT###'
+    db:
+        requests:
+            cpu: '###ZARF_VAR_DB_CPU_REQUEST###'
+            memory: '###ZARF_VAR_DB_MEMORY_REQUEST###'
+        limits:
+            cpu: '###ZARF_VAR_DB_CPU_LIMIT###'
+            memory: '###ZARF_VAR_DB_MEMORY_LIMIT###'
 secrets: {}
 uds:
     domain: "###ZARF_VAR_DOMAIN###"

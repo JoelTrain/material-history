@@ -124,3 +124,14 @@ Before a real-world deployment:
 ## Branch and pull request
 
 The standalone migration is tracked in [pull request #1](https://github.com/tylertodd93-arch/material-history-2/pull/1). The `main` branch remains unchanged until the PR is intentionally merged.
+
+## Single-file Docker Compose
+
+Use [compose.yaml](compose.yaml) for both modes:
+
+```sh
+docker compose up --build -d                    # demo: no PostgreSQL service
+docker compose --profile postgres up --build -d # PostgreSQL: set .env first
+```
+
+For PostgreSQL, set `NEXT_PUBLIC_DEMO_MODE=false` and secure credentials in `.env` **before building**. See [DOCKER.md](DOCKER.md).
