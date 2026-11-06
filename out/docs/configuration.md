@@ -13,7 +13,7 @@ Set these values when deploying the generated Zarf package.
 | `APP_MEMORY_LIMIT` | Memory limit for Compose service app | — | false |
 | `APP_DATABASE_URL` | Value for DATABASE_URL environment variable on Compose service app | postgresql://material_history:demo-only-change-me@db:5432/material_history | false |
 | `APP_HOSTNAME` | Value for HOSTNAME environment variable on Compose service app | 0.0.0.0 | false |
-| `APP_NEXT_PUBLIC_DEMO_MODE` | Value for NEXT_PUBLIC_DEMO_MODE environment variable on Compose service app | true | false |
+| `APP_NEXT_PUBLIC_DEMO_MODE` | Value for NEXT_PUBLIC_DEMO_MODE environment variable on Compose service app | false | false |
 | `APP_NEXT_PUBLIC_SITE_URL` | Value for NEXT_PUBLIC_SITE_URL environment variable on Compose service app | http://localhost:3000 | false |
 | `APP_NODE_ENV` | Value for NODE_ENV environment variable on Compose service app | production | false |
 | `APP_PAYLOAD_SECRET` | Value for PAYLOAD_SECRET environment variable on Compose service app | demo-only-do-not-use-in-production | false |
