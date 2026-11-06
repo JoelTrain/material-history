@@ -4,6 +4,8 @@ on:
     branches: [chore/unify-compose]
     paths:
       - out/chart/**
+      - out/build.compose.yaml
+      - out/zarf.yaml
       - .github/workflows/zarf-postgres.yml
   pull_request:
     branches: [main]
@@ -27,6 +29,11 @@ jobs:
         run: |
           helm lint out/chart
           helm template material-history out/chart --namespace material-history-postgres > /tmp/rendered.yaml
+      - name: Ensure Zarf package defaults to PostgreSQL mode
+        run: |
+          grep -q 'NEXT_PUBLIC_DEMO_MODE: "false"' out/build.compose.yaml
+          grep -q 'NEXT_PUBLIC_DEMO_MODE: "false"' out/chart/values.yaml
+          python3 -c "import yaml; z=yaml.safe_load(open('out/zarf.yaml')); assert next(v['default'] for v in z['variables'] if v['name'] == 'APP_NEXT_PUBLIC_DEMO_MODE') == 'false'"
       - name: Assert PostgreSQL volume ownership and probes
         run: |
           python -m pip install pyyaml
