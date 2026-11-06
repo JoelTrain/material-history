@@ -17,6 +17,13 @@ spec:
             labels:
                 app.kubernetes.io/name: db
         spec:
+            # Volume group ownership is managed by the kubelet or supporting CSI driver.
+            # PostgreSQL 17 Debian uses UID/GID 999; do not depend on root chown in the entrypoint.
+            securityContext:
+                fsGroup: 999
+                fsGroupChangePolicy: OnRootMismatch
+                seccompProfile:
+                    type: RuntimeDefault
             containers:
                 - name: db
                   image: postgres:17-bookworm
@@ -24,6 +31,21 @@ spec:
                   envFrom:
                     - configMapRef:
                         name: db-environment
+                  env:
+                    # Keep initdb away from the PVC mount root so the non-root user
+                    # owns the directory on which it must set 0700 permissions.
+                    # IMPORTANT: existing clusters using the volume root as PGDATA
+                    # must migrate the database files before switching paths.
+                    - name: PGDATA
+                      value: /var/lib/postgresql/data/pgdata
+                  securityContext:
+                    runAsNonRoot: true
+                    runAsUser: 999
+                    runAsGroup: 999
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                        drop:
+                            - ALL
                   ports:
                     - name: port-5432-tcp
                       containerPort: 5432
@@ -31,15 +53,34 @@ spec:
                   volumeMounts:
                     - name: volume-postgres-data
                       mountPath: /var/lib/postgresql/data
+                  # startupProbe gates liveness/readiness during initdb and recovery.
+                  startupProbe:
+                    exec:
+                        command:
+                            - /bin/sh
+                            - -ec
+                            - 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+                    periodSeconds: 5
+                    timeoutSeconds: 5
+                    failureThreshold: 60
+                  readinessProbe:
+                    exec:
+                        command:
+                            - /bin/sh
+                            - -ec
+                            - 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+                    periodSeconds: 10
+                    timeoutSeconds: 5
+                    failureThreshold: 3
                   livenessProbe:
                     exec:
                         command:
                             - /bin/sh
-                            - -c
-                            - pg_isready -U material_history -d material_history
-                    periodSeconds: 5
+                            - -ec
+                            - 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+                    periodSeconds: 20
                     timeoutSeconds: 5
-                    failureThreshold: 15
+                    failureThreshold: 6
                   # {{ $allResources := .Values.resources | default (dict) }}
                   # {{ $serviceResources := (index $allResources "db") | default (dict) }}
                   # {{ $requests := (index $serviceResources "requests") | default (dict) }}
