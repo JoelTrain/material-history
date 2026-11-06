@@ -34,7 +34,7 @@ variables:
       default: ""
     - name: APP_DATABASE_URL
       description: Value for DATABASE_URL environment variable on compose service app
-      default: file:/app/data/material-history.db
+      default: postgresql://material_history:demo-only-change-me@db:5432/material_history
     - name: APP_HOSTNAME
       description: Value for HOSTNAME environment variable on compose service app
       default: 0.0.0.0
@@ -53,6 +53,27 @@ variables:
     - name: APP_PORT
       description: Value for PORT environment variable on compose service app
       default: "3000"
+    - name: DB_CPU_REQUEST
+      description: CPU request for compose service db
+      default: ""
+    - name: DB_MEMORY_REQUEST
+      description: Memory request for compose service db
+      default: ""
+    - name: DB_CPU_LIMIT
+      description: CPU limit for compose service db
+      default: ""
+    - name: DB_MEMORY_LIMIT
+      description: Memory limit for compose service db
+      default: ""
+    - name: DB_POSTGRES_DB
+      description: Value for POSTGRES_DB environment variable on compose service db
+      default: material_history
+    - name: DB_POSTGRES_PASSWORD
+      description: Value for POSTGRES_PASSWORD environment variable on compose service db
+      default: demo-only-change-me
+    - name: DB_POSTGRES_USER
+      description: Value for POSTGRES_USER environment variable on compose service db
+      default: material_history
 components:
     - name: material-history
       required: true
@@ -61,11 +82,14 @@ components:
         flavor: upstream
       charts:
         - name: material-history
-          namespace: material-history
+          namespace: material-history-postgres
           localPath: chart
           version: 0.0.0-dev
           valuesFiles:
             - values/values.yaml
+      images:
+        - postgres:17-bookworm
+        - ghcr.io/defenseunicorns/compose-bridge-uds/wait@sha256:5a1f8bb73a3eae5650460e95bf438d74d33532e8633d3a7aacada266849763a7
       imageArchives:
         - path: image-archives/app.tar
           images:
@@ -94,7 +118,7 @@ components:
                       --builder "$builder_name" \
                       --file 'build.compose.yaml' \
                       --progress plain \
-                      --allow 'fs.read=/Users/joel.birlingmair/projects/not-cui/material-history' \
+                      --allow 'fs.read=/Users/joel.birlingmair/projects/not-cui/material-history-2' \
                       --set 'app.platform+=linux/amd64' \
                       --set 'app.platform+=linux/arm64' \
                       --set 'app.output=type=oci,dest=image-archives/app.tar' \

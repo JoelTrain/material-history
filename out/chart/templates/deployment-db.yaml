@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: db
+    namespace: '{{ .Release.Namespace }}'
+    labels:
+        app.kubernetes.io/name: db
+        app.kubernetes.io/part-of: material-history
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: db
+    template:
+        metadata:
+            name: ""
+            labels:
+                app.kubernetes.io/name: db
+        spec:
+            containers:
+                - name: db
+                  image: postgres:17-bookworm
+                  imagePullPolicy: IfNotPresent
+                  envFrom:
+                    - configMapRef:
+                        name: db-environment
+                  ports:
+                    - name: port-5432-tcp
+                      containerPort: 5432
+                      protocol: TCP
+                  volumeMounts:
+                    - name: volume-postgres-data
+                      mountPath: /var/lib/postgresql/data
+                  livenessProbe:
+                    exec:
+                        command:
+                            - /bin/sh
+                            - -c
+                            - pg_isready -U material_history -d material_history
+                    periodSeconds: 5
+                    timeoutSeconds: 5
+                    failureThreshold: 15
+                  # {{ $allResources := .Values.resources | default (dict) }}
+                  # {{ $serviceResources := (index $allResources "db") | default (dict) }}
+                  # {{ $requests := (index $serviceResources "requests") | default (dict) }}
+                  # {{ $limits := (index $serviceResources "limits") | default (dict) }}
+                  # {{ $cpuRequest := (index $requests "cpu") | default "" }}
+                  # {{ $memoryRequest := (index $requests "memory") | default "" }}
+                  # {{ $cpuLimit := (index $limits "cpu") | default "" }}
+                  # {{ $memoryLimit := (index $limits "memory") | default "" }}
+                  # {{ if or $cpuRequest $memoryRequest $cpuLimit $memoryLimit }}
+                  resources:
+                      # {{ if or $cpuRequest $memoryRequest }}
+                      requests:
+                          # {{ with $cpuRequest }}
+                          cpu: "{{ . }}"
+                          # {{ end }}
+                          # {{ with $memoryRequest }}
+                          memory: "{{ . }}"
+                          # {{ end }}
+                      # {{ end }}
+                      # {{ if or $cpuLimit $memoryLimit }}
+                      limits:
+                          # {{ with $cpuLimit }}
+                          cpu: "{{ . }}"
+                          # {{ end }}
+                          # {{ with $memoryLimit }}
+                          memory: "{{ . }}"
+                          # {{ end }}
+                      # {{ end }}
+                  # {{ end }}
+            volumes:
+                - name: volume-postgres-data
+                  persistentVolumeClaim:
+                    claimName: postgres-data
