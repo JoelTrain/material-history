@@ -40,7 +40,7 @@ variables:
       default: 0.0.0.0
     - name: APP_NEXT_PUBLIC_DEMO_MODE
       description: Value for NEXT_PUBLIC_DEMO_MODE environment variable on compose service app
-      default: "true"
+      default: "false"
     - name: APP_NEXT_PUBLIC_SITE_URL
       description: Value for NEXT_PUBLIC_SITE_URL environment variable on compose service app
       default: http://localhost:3000
